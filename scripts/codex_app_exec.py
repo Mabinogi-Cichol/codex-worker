@@ -205,6 +205,14 @@ def _parse_args() -> argparse.Namespace:
     return args
 
 
+def _normalize_cwd(path_str: str) -> str:
+    """Return an absolute path with an uppercase Windows drive letter."""
+    resolved = os.path.abspath(path_str)
+    if len(resolved) >= 2 and resolved[1] == ":" and resolved[0].isalpha():
+        resolved = resolved[0].upper() + resolved[1:]
+    return resolved
+
+
 def main() -> int:
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -236,7 +244,7 @@ def main() -> int:
         print(resolved_model)
         return 0
 
-    cwd = os.path.abspath(args.cd)
+    cwd = _normalize_cwd(args.cd)
     prompt_text = _read_prompt(args.task_file)
     if not prompt_text.strip():
         print("任务单内容为空，已中止执行。", file=sys.stderr)
@@ -315,6 +323,7 @@ def main() -> int:
         else:
             thread_method = "thread/start"
             thread_params["ephemeral"] = False
+            thread_params["threadSource"] = "user"
 
         _send_json(
             proc,
